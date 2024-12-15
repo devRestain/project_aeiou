@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "aeiou"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+streamlit = "^1.40.2"
+langchain = "^0.3.10"
+openai = "^1.57.1"
+faiss-cpu = "^1.9.0.post1"
+langchain-openai = "^0.2.12"
+langgraph = "^0.2.56"
+ipython = "^8.30.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

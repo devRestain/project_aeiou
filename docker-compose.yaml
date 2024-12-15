@@ -1,0 +1,8 @@
+services:
+  dev:
+    image: pjaeiou:0.1
+    volumes:
+      - /mnt/c/foryu/PjAEIOU:/app
+    tty: true
+    stdin_open: true
+    container_name: project_aeiou
