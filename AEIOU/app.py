@@ -1,29 +1,31 @@
 import streamlit as st
+from agents.workflow import ChaeUm
+from utils.setting import Setting
+from utils.chat_logs import Show_chat_logs
+from utils.input_box import Main_input_box
 
-st.set_page_config(
-    page_title="AEIOU",
-    layout="wide",
-)
-st.title(
-    body="AEIOU demo",
-)
 
-with st.sidebar:
-    st.write("i'm sidebar")
-
-emptyLeft, mainPart, emptyRight = st.columns([1, 8, 1])
+def Sidebar():
+    with st.sidebar:
+        st.write("i'm sidebar")
 
 
 def main():
-    with emptyLeft:
-        st.write("i'm left.")
-    with emptyRight:
-        st.write("i'm right.")
+
+    emptyLeft, mainPart, emptyRight = st.columns([1, 8, 1])
     with mainPart:
-        st.write("HI!")
-        st.text_input("Give me Sth!")
-    # 유저가 제안된 행동 중 선택하면 유저 취향 따라서 예상 소요시간 계산 후 저장
+        Show_chat_logs()
+        Main_input_box()
+        if st.session_state.user_input_instance:
+            agent_output = {
+                "role": "ai",
+                "content": ChaeUm.invoke(st.session_state.user_input_instance),
+            }
+            st.session_state.memory.append(agent_output)
+            st.rerun()
 
 
 if __name__ == "__main__":
+    Setting()
+    Sidebar()
     main()
