@@ -6,4 +6,5 @@ from langgraph.graph.message import add_messages
 class adviceState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     focusedPlan: str
-    plans: dict
+    related: str
+    plans: list

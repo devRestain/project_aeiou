@@ -7,9 +7,9 @@ def Setting():
         layout="wide",
     )
 
-    if not st.session_state.memory:
+    if "memory" not in st.session_state:
         st.session_state.memory = [{"role": "ai", "content": "안녕하세요! 반갑습니다."}]
-    if not st.session_state.user_input_instance:
+    if "user_input_instance" not in st.session_state:
         st.session_state.user_input_instance = ""
 
     st.title(

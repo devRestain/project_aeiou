@@ -12,16 +12,24 @@ def Sidebar():
 
 def main():
 
-    emptyLeft, mainPart, emptyRight = st.columns([1, 8, 1])
+    emptyLeft, mainPart, emptyRight = st.columns([1, 10, 1])
     with mainPart:
         Show_chat_logs()
         Main_input_box()
         if st.session_state.user_input_instance:
+            human_input = {
+                "role": "human",
+                "content": st.session_state.user_input_instance,
+            }
+            st.session_state.memory.append(human_input)
             agent_output = {
                 "role": "ai",
-                "content": ChaeUm.invoke(st.session_state.user_input_instance),
+                "content": ChaeUm.invoke({"messages": st.session_state.memory})[
+                    "messages"
+                ][-1].content,
             }
             st.session_state.memory.append(agent_output)
+            st.session_state.user_input_instance = ""
             st.rerun()
 
 

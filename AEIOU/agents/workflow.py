@@ -7,25 +7,25 @@ from agents.unified_manager.node import Unified_manager
 
 
 def call_Advisor(state: MessagesState) -> MessagesState:
-    input = {"meesages": state["messages"]}
+    input = {"messages": state["messages"]}
     output = Advisor.invoke(input)
     return {"messages": output["messages"]}
 
 
 def call_Executer(state: MessagesState) -> MessagesState:
-    input = {"meesages": state["messages"]}
+    input = {"messages": state["messages"]}
     output = Executer.invoke(input)
     return {"messages": output["messages"]}
 
 
 def call_Interpretor(state: MessagesState) -> MessagesState:
-    input = {"meesages": state["messages"]}
+    input = {"messages": state["messages"]}
     output = Interpretor.invoke(input)
     return {"messages": output["messages"]}
 
 
 def call_Organizer(state: MessagesState) -> MessagesState:
-    input = {"meesages": state["messages"]}
+    input = {"messages": state["messages"]}
     output = Organizer.invoke(input)
     return {"messages": output["messages"]}
 

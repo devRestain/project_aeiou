@@ -1,9 +1,10 @@
 from typing_extensions import Literal
 from langgraph.types import Command
 from agents.llm import select_node
-from agents.utils import load_json, add_json
+
+# from agents.utils import load_json, add_json
 from agents.advisor.state import adviceState
-from agents.advisor.utils import focused_plan, just_invoke, generate_5_details
+from agents.advisor.utils import generate_focused_plan, just_invoke, generate_5_details
 
 """
 {
@@ -19,25 +20,33 @@ def Advise_selector(state: adviceState) -> adviceState:
     """
     유저가 기존 계획의 세부 계획을 세우고 싶은 건지 감지.
     """
-    plans = load_json(file_path=r"../../data/user/plans.json")
+    existing_plans = {
+        "processing": [{"name": "글 쓰기", "details": ""}, {"name": "보컬 트레이닝"}]
+    }  # load_json(file_path=r"../data/user/plans.json")
+    plans = [item["name"] for item in existing_plans["processing"]]
     find_prompt = (
         "당신은 중요한 고객에게 고용된 분석가입니다."
         "당신은 고객의 말을 듣고, 고객이 어떤 주제에 대해 계획하려 하는지 파악해야 합니다."
         "당신은 일을 완벽히 수행하면 보너스를 받게 될 것이지만, 나쁜 성과를 낸다면 해고될 수 있습니다."
     )
-    find_messages = [{"role": "system", "content": find_prompt}] + state["messages"][-1]
-    focusedPlan = focused_plan(messages=find_messages, target_plans=plans["processing"])
-    if focusedPlan == "new_plan":
-        detect_prompt = (
-            "당신은 중요한 고객에게 고용된 분석가입니다."
-            "고객의 말에서 그가 새로이 계획하려는 주제를 단어 그대로 추출하세요."
-            "당신은 일을 완벽히 수행하면 보너스를 받게 될 것이지만, 나쁜 성과를 낸다면 해고될 수 있습니다."
-        )
-        detect_messages = [{"role": "system", "content": detect_prompt}] + state[
-            "messages"
-        ][-1]
-        focusedPlan = just_invoke(message=detect_messages)
-    output = {"focusedPlan": focusedPlan, "plans": plans}
+    find_messages = [
+        {"role": "system", "content": find_prompt},
+        state["messages"][-2],
+    ]
+    detect_prompt = (
+        "당신은 중요한 고객에게 고용된 분석가입니다."
+        "고객의 말에서 그가 새로이 계획하려는 주제를 단어 그대로 추출하세요."
+        "당신은 일을 완벽히 수행하면 보너스를 받게 될 것이지만, 나쁜 성과를 낸다면 해고될 수 있습니다."
+    )
+    detect_messages = [
+        {"role": "system", "content": detect_prompt},
+        state["messages"][-2],
+    ]
+    output = generate_focused_plan(
+        find_messages=find_messages,
+        detect_messages=detect_messages,
+        target_plans=plans,
+    )
     return output
 
 
@@ -88,8 +97,8 @@ def Assigner_for_long_term(
         {"role": "human", "content": human_prompt},
     ]
 
-    response = generate_5_details(messages)
-    return Command(goto="advise_provider", update={"plans": response})
+    response = generate_5_details(messages=messages, related=state["related"])
+    return Command(goto="advise_provider", update={"plans": list(response.values())})
 
 
 def Assigner_for_short_term(
@@ -110,8 +119,8 @@ def Assigner_for_short_term(
         {"role": "human", "content": human_prompt},
     ]
 
-    response = generate_5_details(messages)
-    return Command(goto="advise_provider", update={"plans": response})
+    response = generate_5_details(messages=messages, related=state["related"])
+    return Command(goto="advise_provider", update={"plans": list(response.values())})
 
 
 def Assigner_for_task(
@@ -132,28 +141,29 @@ def Assigner_for_task(
         {"role": "human", "content": human_prompt},
     ]
 
-    response = generate_5_details(messages)
-    return Command(goto="advise_provider", update={"plans": response})
+    response = generate_5_details(messages=messages, related=state["related"])
+    return Command(goto="advise_provider", update={"plans": list(response.values())})
 
 
 def Advise_provider(
     state: adviceState,
 ) -> adviceState:
-    add_json(
-        file_path=r"../../data/user/plans.json",
-        key="processing",
-        new_value=list(state["plans"].values()),
-    )
+    # add_json(
+    #    file_path=r"../data/user/plans.json",
+    #    key="processing",
+    #    new_value=list(state["plans"].values()),
+    # )
     system_prompt = (
         "당신은 중요한 고객에게 고용된, 사려 깊은 조언자입니다."
         "당신은 고객의 계획을 달성할 수 있는 세부 계획을 제안해야 합니다."
         f"고객의 계획은 다음과 같습니다: {state['focusedPlan']}"
+        f"고객의 기존 계획 중 관련 있는 사항은 다음과 같습니다: {state['related']}"
         "당신은 아래와 같이 다섯 개의 세부 계획을 제안하려 합니다."
-        f"세부 계획 1: {state['plans']['detail_1']['name']} \n 설명: {state['plans']['detail_1']['info']} \n\n"
-        f"세부 계획 1: {state['plans']['detail_2']['name']} \n 설명: {state['plans']['detail_2']['info']} \n\n"
-        f"세부 계획 1: {state['plans']['detail_3']['name']} \n 설명: {state['plans']['detail_3']['info']} \n\n"
-        f"세부 계획 1: {state['plans']['detail_4']['name']} \n 설명: {state['plans']['detail_4']['info']} \n\n"
-        f"세부 계획 1: {state['plans']['detail_5']['name']} \n 설명: {state['plans']['detail_5']['info']} \n\n"
+        f"세부 계획 1: {state['plans'][-1]['name']} \n 설명: {state['plans'][-1]['info']} \n\n"
+        f"세부 계획 2: {state['plans'][-2]['name']} \n 설명: {state['plans'][-2]['info']} \n\n"
+        f"세부 계획 3: {state['plans'][-3]['name']} \n 설명: {state['plans'][-3]['info']} \n\n"
+        f"세부 계획 4: {state['plans'][-4]['name']} \n 설명: {state['plans'][-4]['info']} \n\n"
+        f"세부 계획 5: {state['plans'][-5]['name']} \n 설명: {state['plans'][-5]['info']} \n\n"
         "지금까지의 대화 내역을 확인하고 적절한 어조로 답변을 제공하십시오."
         "당신은 일을 완벽히 수행하면 보너스를 받게 될 것이지만, 나쁜 성과를 낸다면 해고될 수 있습니다."
     )
